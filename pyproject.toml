@@ -1,0 +1,13 @@
+[project]
+name = "prompt-flow-poc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "promptflow>=1.18.1",
+    "promptflow-azure>=1.18.1",
+    "promptflow-devkit>=1.18.1",
+    "promptflow-tools>=1.6.1",
+    "promptflow-tracing>=1.18.1",
+]
