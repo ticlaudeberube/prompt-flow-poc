@@ -25,6 +25,25 @@
     "memory": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "MCP Server for Azure AI Foundry": {
+        "command": "uvx",
+        "args": [
+            "--prerelease=allow",
+            "--no-cache",
+            "--from",
+            "git+https://github.com/azure-ai-foundry/mcp-foundry.git",
+            "run-azure-ai-foundry-mcp",
+            "--envFile",
+            "${workspaceFolder}/.env"
+        ]
     }
   }
 }
