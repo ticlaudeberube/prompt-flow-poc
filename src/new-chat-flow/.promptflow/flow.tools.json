@@ -1,0 +1,52 @@
+{
+    "package": {},
+    "code": {
+        "foundry_chat.py": {
+            "type": "python",
+            "inputs": {
+                "question": {
+                    "type": [
+                        "string"
+                    ]
+                },
+                "chat_history": {
+                    "type": [
+                        "list"
+                    ]
+                },
+                "temperature": {
+                    "type": [
+                        "double"
+                    ],
+                    "default": "0.7"
+                },
+                "max_tokens": {
+                    "type": [
+                        "int"
+                    ],
+                    "default": "256"
+                },
+                "model": {
+                    "type": [
+                        "string"
+                    ],
+                    "default": "Phi-3.5-mini-instruct-cuda-gpu"
+                },
+                "top_p": {
+                    "type": [
+                        "double"
+                    ],
+                    "default": "1.0"
+                },
+                "stop": {
+                    "type": [
+                        "list"
+                    ]
+                }
+            },
+            "description": "Custom tool to call Foundry Local API directly without authentication\n\nArgs:\n    question: The user's question or prompt\n    chat_history: Previous conversation messages\n    temperature: Controls randomness in generation (0.0 to 2.0)\n    max_tokens: Maximum number of tokens to generate\n    model: The model name to use for generation\n    top_p: Controls diversity via nucleus sampling (0.0 to 1.0)\n    stop: List of strings where generation should stop",
+            "source": "foundry_chat.py",
+            "function": "foundry_local_chat"
+        }
+    }
+}

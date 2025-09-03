@@ -1,0 +1,5 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/OpenAIConnection.schema.json
+name: open_ai_connection
+type: open_ai
+api_key: "sk-proj-dummy1234567890abcdefghijklmnopqrstuvwxyz1234567890"
+api_base: "http://127.0.0.1:58307/v1"

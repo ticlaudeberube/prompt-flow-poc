@@ -1,0 +1,45 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+inputs:
+  chat_history:
+    type: list
+    is_chat_history: true
+    default: []
+  question:
+    type: string
+    is_chat_input: true
+    default: "Hello! How can you help me today?"
+  temperature:
+    type: double
+    default: 0.7
+  max_tokens:
+    type: int
+    default: 256
+  model:
+    type: string
+    default: "Phi-3.5-mini-instruct-cuda-gpu"
+  top_p:
+    type: double
+    default: 1.0
+  stop:
+    type: list
+    default: []
+outputs:
+  answer:
+    type: string
+    reference: ${chat.output}
+    is_chat_output: true
+nodes:
+- name: chat
+  type: python
+  source:
+    type: code
+    path: foundry_chat.py
+  inputs:
+    question: ${inputs.question}
+    chat_history: ${inputs.chat_history}
+    temperature: ${inputs.temperature}
+    max_tokens: ${inputs.max_tokens}
+    model: ${inputs.model}
+    top_p: ${inputs.top_p}
+    stop: ${inputs.stop}
+  use_variants: false
