@@ -1,0 +1,24 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  question:
+    type: string
+    default: "What is Azure OpenAI?"
+outputs:
+  answer:
+    type: string
+    reference: ${chat_with_azure_openai.output}
+nodes:
+- name: chat_with_azure_openai
+  type: llm
+  source:
+    type: code
+    path: chat_completion.jinja2
+  inputs:
+    deployment_name: ${inputs.deployment_name}
+    max_tokens: 800
+    temperature: 0.7
+    question: ${inputs.question}
+  connection: azure_openai_connection
+  api: chat

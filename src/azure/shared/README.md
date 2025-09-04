@@ -5,6 +5,9 @@ This folder contains shared configurations and utilities for Azure flows.
 ## Contents
 
 - **Connections**: Common Azure connection configurations
+  - `azure_openai_connection.yaml` - Azure OpenAI service connection
+  - `azure_ml_connection.yaml` - Azure ML workspace connection
+  - `connections.md` - Documentation for connection usage
 - **Templates**: Reusable flow templates for Azure services
 - **Utilities**: Helper functions and tools for Azure integration
 - **Scripts**: Common setup and deployment scripts

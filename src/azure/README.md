@@ -37,7 +37,7 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 
 # Azure AI Foundry Configuration
 AZURE_AI_FOUNDRY_PROJECT_ID=your-project-id
-AZURE_AI_FOUNDRY_ENDPOINT=https://your-endpoint.cognitiveservices.azure.com/
+AZURE_AI_FOUNDRY_ENDPOINT=https://your-workspace.workspaces.api.azureml.ms
 ```
 
 ## Folders

@@ -1,0 +1,10 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/AzureOpenAIConnection.schema.json
+name: azure_ml_connection
+type: CustomConnection
+configs:
+  subscription_id: ${env:AZURE_SUBSCRIPTION_ID}
+  resource_group: ${env:AZURE_RESOURCE_GROUP}
+  workspace_name: ${env:AZURE_WORKSPACE_NAME}
+  endpoint: ${env:AZURE_AI_FOUNDRY_ENDPOINT}
+secrets:
+  # Add any secrets needed for Azure ML authentication

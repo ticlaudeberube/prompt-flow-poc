@@ -1,0 +1,23 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  model_name:
+    type: string
+    default: "gpt-35-turbo"
+  input_data:
+    type: string
+    default: "Hello from Azure AI Foundry!"
+outputs:
+  result:
+    type: string
+    reference: ${foundry_inference.output}
+nodes:
+- name: foundry_inference
+  type: python
+  source:
+    type: code
+    path: foundry_inference.py
+  inputs:
+    model_name: ${inputs.model_name}
+    input_data: ${inputs.input_data}
