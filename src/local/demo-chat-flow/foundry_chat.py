@@ -3,13 +3,14 @@ import requests
 import json
 from dotenv import load_dotenv
 from promptflow.core import tool
+from foundry_local import FoundryLocalManager
 
 # Load environment variables
 load_dotenv()
 
 
 @tool
-def foundry_local_chat(
+def chat(
     question: str, 
     chat_history: list = None, 
     temperature: float = None,
@@ -62,8 +63,20 @@ def foundry_local_chat(
     if stop and len(stop) > 0:
         payload["stop"] = stop
     
-    # Get endpoint from environment variable
-    endpoint = os.getenv('FOUNDRY_LOCAL_ENDPOINT', 'http://127.0.0.1:58307')
+    # Get endpoint from FoundryLocalManager or environment variable
+    endpoint = None
+    
+    # Try to use FoundryLocalManager first
+    try:
+        manager = FoundryLocalManager()
+        if manager.is_running():
+            endpoint = manager.get_endpoint()
+    except Exception:
+        pass
+    
+    # Fall back to environment variable if auto-detection fails
+    if not endpoint:
+        endpoint = os.getenv('FOUNDRY_LOCAL_ENDPOINT', 'http://127.0.0.1:58307')
     
     # Make the API call to Foundry Local
     try:
@@ -82,3 +95,15 @@ def foundry_local_chat(
         return f"Error calling Foundry Local: {str(e)}"
     except (KeyError, IndexError) as e:
         return f"Error parsing response: {str(e)}"
+
+
+if __name__ == "__main__":
+    # Test the function when run directly
+    print("Testing Foundry Chat function...")
+    test_response = chat(
+        question="What is the golden ratio? Please be concise.",
+        temperature=0.7,
+        max_tokens=150
+    )
+    print("Test Response:")
+    print(test_response)
