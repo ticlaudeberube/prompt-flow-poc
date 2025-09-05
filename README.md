@@ -1,6 +1,6 @@
 # Prompt Flow POC
 
-This project is a Proof of Concept (POC) for experimenting with Prompt Flow tools and workflows using Model Context Protocol (MCP) servers.
+This project is a Proof of Concept (POC) for experimenting with Prompt Flow tools and workflows using Model Context Protocol (MCP) servers and Azure AI Foundry Prompt Flow local.
 
 ## Features
 
@@ -202,13 +202,21 @@ export PATH="$HOME/.cargo/bin:$PATH"
    # Edit .env with your actual credentials
    ```
 
-5. **Test MCP servers**
+5. **Configure Foundry Local (one-time setup)**
    ```bash
-   # Test Azure AI Foundry MCP server
-   uvx --prerelease=allow --no-cache --from git+https://github.com/azure-ai-foundry/mcp-foundry.git run-azure-ai-foundry-mcp --help
+   # Set fixed port for consistent connectivity
+   foundry service set --port 58307 --show
+   foundry service status
+   ```
+
+6. **Test the setup**
+   ```bash
+   # Test Foundry Local connectivity
+   python src/app.py
    
-   # Test GitHub token
-   source .env && curl -H "Authorization: token $GITHUB_PERSONAL_ACCESS_TOKEN" https://api.github.com/user
+   # Test local Prompt Flow
+   cd src/local
+   python -m promptflow._cli._pf.entry flow test --flow . --inputs question="Hello!"
    ```
 
 ## Installation
@@ -231,20 +239,9 @@ npm install -g @modelcontextprotocol/server-memory
 npm install -g @modelcontextprotocol/server-github
 ```
 
-## Environment Configuration
-
-The project uses environment variables for configuration. Copy the example file and customize:
-
-```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Edit the .env file with your settings
-```
-
 ### Foundry Local Settings
 
-Configure your local AI service endpoint and default model settings:
+Configure your local AI service endpoint and default model settings. The application automatically detects Foundry Local using `FoundryLocalManager`, but you can configure fallback settings:
 
 ```bash
 # Foundry Local endpoint (automatically detected if running)
@@ -256,15 +253,9 @@ FOUNDRY_LOCAL_DEFAULT_TEMPERATURE=0.7
 FOUNDRY_LOCAL_DEFAULT_MAX_TOKENS=256
 ```
 
-**Note**: The application will automatically detect Foundry Local using `FoundryLocalManager`. Environment variables serve as fallback configuration when auto-detection fails.
-
-### 🔧 **Foundry Local Port Configuration**
+#### **Port Configuration**
 
 **IMPORTANT**: Configure Foundry Local to use a fixed port for consistent connectivity.
-
-#### **One-Time Setup (Recommended)**
-
-Set Foundry Local to always use port 58307:
 
 ```bash
 # Set the service port (one-time configuration)
@@ -275,211 +266,29 @@ foundry service status
 curl http://127.0.0.1:58307/v1/models
 ```
 
-#### **Configuration Persistence**
+The port configuration is **persistent** across restarts and reboots.
 
-The port configuration is **persistent** - you only need to set it once:
-- ✅ **Survives application restarts**
-- ✅ **Survives system reboots** 
-- ✅ **Applies to all future Foundry Local sessions**
-- ✅ **Stored in Foundry Local's configuration files**
+#### **Auto-Start Foundry Local (Optional)**
 
-#### **Verification Commands**
+To automatically start Foundry Local when your computer boots:
 
-```bash
-# Check current service status and port
-foundry service status
-
-# View current configuration
-foundry service set --show
-
-# Test connectivity
-curl http://127.0.0.1:58307/v1/models
-
-# Restart service if needed (keeps same port)
-foundry service restart
-```
-
-#### **Alternative Ports**
-
-If port 58307 is in use, you can choose alternatives:
-
-```bash
-# Use port 11434 (Ollama standard)
-foundry service set --port 11434
-
-# Use port 8080 (common web service port)
-foundry service set --port 8080
-
-# Use port 5000 (development standard)
-foundry service set --port 5000
-```
-
-#### **Troubleshooting Port Issues**
-
-```bash
-# Check what's using a port
-netstat -an | findstr :58307
-
-# Check Foundry Local processes
-Get-Process | Where-Object {$_.ProcessName -like "*foundry*"}
-
-# Reset to defaults if needed
-foundry service set --defaults --show
-```
-
-### 🚀 **Auto-Start Foundry Local Service on System Startup**
-
-Configure Foundry Local to start automatically when your computer boots up.
-
-#### **Method 1: Windows Startup Folder (Simplest - Recommended)**
-
-Create a batch file that automatically starts Foundry Local:
-
-**Step 1: Open Startup Folder**
-```powershell
-# Open Windows Startup folder
-Start-Process shell:startup
-```
-
-**Step 2: Create Batch File**
-In the Startup folder that opens:
-1. **Right-click** → **New** → **Text Document**
-2. **Rename** to: `foundry-autostart.bat` (change extension from .txt to .bat)
-3. **Right-click** the file → **Edit**
-4. **Add this content:**
-
+**Windows Startup Folder (Recommended):**
+1. Open startup folder: `Win+R` → `shell:startup`
+2. Create `foundry-autostart.bat` with content:
 ```batch
 @echo off
-REM Wait 10 seconds for system to fully boot
 timeout /t 10 /nobreak >nul
-
-REM Start Foundry Local service
-foundry service start
-
-REM Optional: Show confirmation (remove if you don't want popup)
-echo Foundry Local started successfully!
-timeout /t 3 /nobreak >nul
-```
-
-5. **Save and close**
-
-**Step 3: Test the Batch File**
-```powershell
-# Test by double-clicking the batch file
-# Or run from PowerShell:
-& "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\foundry-autostart.bat"
-```
-
-#### **Alternative: Minimal Batch File**
-
-For a simpler version without delays or messages:
-
-```batch
-@echo off
 foundry service start
 ```
 
-#### **Method 2: Windows Settings UI**
-
-If Foundry Local appears in Windows Settings:
-
+**Windows Task Scheduler:**
 ```powershell
-# Open Startup Apps settings
-Start-Process ms-settings:startupapps
-
-# Look for "Foundry Local" or "Microsoft Foundry Local"
-# Toggle it ON if found
-```
-
-#### **Method 3: Windows Task Scheduler (Advanced)**
-
-Create a scheduled task for more control:
-
-```powershell
-# Open Task Scheduler (taskschd.msc)
-# Or use PowerShell to create the task:
-
 $Action = New-ScheduledTaskAction -Execute "foundry" -Argument "service start"
 $Trigger = New-ScheduledTaskTrigger -AtStartup
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-$Task = New-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings
-
-# Register the task
-Register-ScheduledTask -TaskName "FoundryLocalAutoStart" -InputObject $Task -User $env:USERNAME
+Register-ScheduledTask -TaskName "FoundryLocalAutoStart" -Action $Action -Trigger $Trigger
 ```
 
-#### **Method 3: Windows Service (Advanced)**
-
-If you want Foundry Local to run as a true Windows service:
-
-```powershell
-# Install NSSM (Non-Sucking Service Manager)
-# Download from: https://nssm.cc/download
-
-# Create service using NSSM
-nssm install FoundryLocal "foundry"
-nssm set FoundryLocal AppParameters "service start"
-nssm set FoundryLocal DisplayName "Foundry Local AI Service"
-nssm set FoundryLocal Description "Local AI model inference service"
-nssm set FoundryLocal Start SERVICE_AUTO_START
-
-# Start the service
-nssm start FoundryLocal
-```
-
-#### **Method 4: PowerShell Profile Auto-Start**
-
-Add to your PowerShell profile for automatic start when opening PowerShell:
-
-```powershell
-# Edit your PowerShell profile
-notepad $PROFILE
-
-# Add this line to auto-start Foundry Local
-if (!(Get-Process foundry -ErrorAction SilentlyContinue)) {
-    Start-Process -FilePath "foundry" -ArgumentList "service", "start" -NoNewWindow
-}
-```
-
-#### **Method 5: Registry Startup Entry**
-
-Add Foundry Local to Windows Registry startup entries:
-
-```powershell
-# Add registry entry for auto-start
-$RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
-$AppName = "FoundryLocal"
-$AppPath = "foundry service start"
-
-Set-ItemProperty -Path $RegPath -Name $AppName -Value $AppPath
-```
-
-#### **Verification Commands**
-
-Check if auto-start is working:
-
-```bash
-# Check if Foundry Local is running
-foundry service status
-
-# Check system startup programs
-Get-CimInstance -ClassName Win32_StartupCommand | Where-Object {$_.Name -like "*foundry*"}
-
-# Check scheduled tasks
-Get-ScheduledTask | Where-Object {$_.TaskName -like "*foundry*"}
-
-# Check Windows services
-Get-Service | Where-Object {$_.Name -like "*foundry*"}
-```
-
-#### **Recommended Approach**
-
-For most users, **Method 2 (Task Scheduler)** is recommended because:
-- ✅ Runs with proper user permissions
-- ✅ Handles startup delays gracefully
-- ✅ Easy to modify or disable
-- ✅ Reliable across Windows updates
-- ✅ Built into Windows (no additional software needed)
+See [Foundry Local documentation](https://github.com/microsoft/Foundry-Local) for additional auto-start methods.
 
 ### Azure Settings
 
@@ -573,44 +382,12 @@ number approximately equal to 1.6180339887498...
 ```
 
 #### **Features:**
-- ** Model Detection**: Lists all loaded models with display names and metadata
+- **🔍 Model Detection**: Lists all loaded models with display names and metadata
 - **🛡️ Error Handling**: Comprehensive error handling with helpful diagnostic messages
 - **📡 API Testing**: Tests both model listing and chat completion endpoints
 - **⏱️ Timeout Management**: Configurable timeouts for reliable testing
-- **🔗 Fixed Endpoint**: Uses configured endpoint http://127.0.0.1:58307
+- **🔗 Smart Detection**: Uses FoundryLocalManager for automatic endpoint detection
 - **📈 Status Reporting**: Clear success/failure indicators with emoji feedback
-
-#### **Troubleshooting:**
-
-**❌ "Foundry Local is not running"**
-```bash
-# Solution: Start Foundry Local application
-# Ensure it shows: 🟢 Service is already running on http://127.0.0.1:XXXX/
-```
-
-**❌ "No models available"**
-```bash
-# Solution: Load a model in Foundry Local
-# 1. Open Foundry Local app
-# 2. Download a model (e.g., Phi-3.5-mini)
-# 3. Click "Load" to activate the model
-```
-
-**❌ "Could not connect to Foundry Local"**
-```bash
-# Solution: Check port and firewall
-# 1. Verify Foundry Local is running
-# 2. Check Windows Firewall settings
-# 3. Try different ports: 1234, 58307
-```
-
-**❌ "Error making chat completion request"**
-```bash
-# Solution: Model issues
-# 1. Ensure model is fully loaded (not just downloaded)
-# 2. Check model has sufficient memory
-# 3. Restart Foundry Local if needed
-```
 
 #### **Development Notes:**
 - Uses `FoundryLocalManager` for automatic service detection
@@ -633,7 +410,7 @@ The `src/local/` directory contains Prompt Flow configurations for **local AI de
 - **🚀 Zero Cloud Dependencies**: Everything runs locally
 - **🎛️ Full Parameter Control**: Temperature, max_tokens, top_p, stop sequences
 - **💬 Chat History Support**: Multi-turn conversations with context preservation
-- **� Model Switching**: Easy switching between available Foundry Local models
+- **🔄 Model Switching**: Easy switching between available Foundry Local models
 - **🛡️ Error Handling**: Graceful error handling with informative messages
 - **⚡ High Performance**: Direct HTTP calls for optimal response times
 
@@ -682,7 +459,7 @@ azure/
 - **🔄 MLOps Integration**: End-to-end machine learning operations
 
 #### **Environment Configuration:**
-Azure flows require additional environment variables:
+Azure flows require additional environment variables (see Environment Setup section for complete configuration):
 ```bash
 # Azure OpenAI Configuration
 AZURE_OPENAI_API_KEY=your-azure-openai-key
@@ -712,23 +489,6 @@ python -m promptflow._cli._pf.entry flow test --flow . --inputs question="Hello 
 3. **Deploy Models**: Deploy your preferred models (GPT-4, custom models)
 4. **Test Connectivity**: Validate connections before building flows
 5. **Deploy Flows**: Deploy to Azure for production use
-
-#### **Purpose:**
-- 🔄 Provide conversational AI through Prompt Flow
-- 🔗 Integrate with Foundry Local without authentication
-- ⚙️ Configurable LLM parameters (temperature, max_tokens, etc.)
-- 💬 Support chat history for multi-turn conversations
-- 🎛️ VS Code extension compatibility
-
-#### **Key Features:**
-- **🚀 Zero-Config Setup**: No API keys or authentication required
-- **🎛️ Full Parameter Control**: Temperature, max_tokens, top_p, stop sequences
-- **💬 Chat History Support**: Multi-turn conversations with context preservation
-- **🔄 Model Switching**: Easy switching between available Foundry Local models
-- **🏗️ Custom Architecture**: Direct API integration bypassing standard LLM limitations
-- **📊 Real-time Validation**: Built-in flow validation and error reporting
-- **🖥️ IDE Integration**: Seamless VS Code Prompt Flow extension support
-- **⚡ High Performance**: Direct HTTP calls for optimal response times
 
 #### **Key Files:**
 ```
@@ -927,7 +687,46 @@ prompt-flow-poc/
 └── README.md           # This file
 ```
 
-## Troubleshooting
+## Troubleshooting & Debugging
+
+### **Foundry Local Issues**
+```bash
+# Check if Foundry Local is running
+curl http://127.0.0.1:58307/v1/models
+
+# Check service status  
+foundry service status
+
+# Restart Foundry Local if needed (keeps same port)
+foundry service restart
+```
+
+### **Prompt Flow Issues**
+```bash
+# Validate flow configuration
+cd src/local
+python -m promptflow._cli._pf.entry flow validate --source .
+
+# Test flow with inputs
+python -m promptflow._cli._pf.entry flow test --flow . --inputs question="test"
+
+# Check flow connections
+python -m promptflow._cli._pf.entry connection list
+```
+
+### **Environment Issues**
+```bash
+# Check Python environment
+uv python --version
+uv pip list
+
+# Reinstall dependencies
+uv sync
+
+# Reload environment variables
+source .env  # macOS/Linux
+# or refresh PowerShell session on Windows
+```
 
 ### **MCP Server Issues**
 ```bash
@@ -949,88 +748,11 @@ az account show
 source .env && curl -H "Authorization: token $GITHUB_PERSONAL_ACCESS_TOKEN" https://api.github.com/user
 ```
 
-### **Environment Issues**
-```bash
-# Reload environment variables
-source .env
-
-# Check Python environment
-uv python --version
-uv pip list
-```
-
-## Debugging Guide
-
-### ✅ **Local Flow - Foundry Local Integration**
-
-The `local` flow has been successfully configured to work with Foundry Local. Here's what was debugged and resolved:
-
-#### **Issues Resolved:**
-1. **Connection Authentication**: Replaced built-in LLM node with custom Python node to bypass authentication requirements
-2. **API Endpoint**: Configured to use correct Foundry Local port (58307) instead of default (1234)
-3. **Model Names**: Updated to use correct model ID: `Phi-3.5-mini-instruct-cuda-gpu`
-4. **Input Validation**: Added default values for required inputs to work with VS Code extension
-
-#### **Current Configuration:**
-- **Custom Python Tool**: `foundry_chat.py` - Direct API calls to Foundry Local
-- **API Endpoint**: `http://127.0.0.1:58307/v1/chat/completions`
-- **Model**: `Phi-3.5-mini-instruct-cuda-gpu`
-- **No Authentication Required**: Foundry Local doesn't require API keys
-
-#### **Testing the Flow:**
-```bash
-# Command line test
-cd src/local
-..\..\.venv\Scripts\python.exe -m promptflow._cli._pf.entry flow test --flow . --inputs question="Hello!"
-
-# Validate flow configuration
-..\..\.venv\Scripts\python.exe -m promptflow._cli._pf.entry flow validate --source .
-```
-
-#### **Prerequisites:**
-1. **Foundry Local must be running** on port 58307
-2. **Model loaded**: Ensure `Phi-3.5-mini-instruct-cuda-gpu` model is loaded in Foundry Local
-3. **Test connectivity**: `curl http://127.0.0.1:58307/v1/models`
-
-### 🔧 **Common Debugging Steps**
-
-#### **Foundry Local Issues**
-```bash
-# Check if Foundry Local is running
-curl http://127.0.0.1:58307/v1/models
-
-# Check service status
-curl http://127.0.0.1:58307/health  # if available
-
-# Restart Foundry Local if needed
-# Close and reopen Foundry Local application
-```
-
-#### **Prompt Flow Issues**
-```bash
-# Validate flow configuration
-cd src/local
-..\..\.venv\Scripts\python.exe -m promptflow._cli._pf.entry flow validate --source .
-
-# Test flow with inputs
-..\..\.venv\Scripts\python.exe -m promptflow._cli._pf.entry flow test --flow . --inputs question="test"
-
-# Check flow connections (if using any)
-..\..\.venv\Scripts\python.exe -m promptflow._cli._pf.entry connection list
-```
-
-#### **Python Environment Issues**
-```bash
-# Check Python environment
-uv python --version
-.venv\Scripts\python.exe --version
-
-# Reinstall dependencies
-uv sync
-
-# Check required packages
-.venv\Scripts\pip.exe list | findstr "requests\|promptflow"
-```
+### **Local Flow Configuration Notes**
+- Uses custom Python tool (`foundry_chat.py`) for direct API calls
+- Configured for port 58307 (ensure Foundry Local uses this port)
+- Model: `Phi-3.5-mini-instruct-cuda-gpu` (ensure it's loaded)
+- No authentication required for Foundry Local
 
 ## Contributing
 
